@@ -1,3 +1,4 @@
+import os
 from voice_of_the_user import speech_to_text
 from brain_of_the_doc import brain_of_the_doctor
 from voice_of_the_doctor import text_to_speech
@@ -273,7 +274,11 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
 # ============================================================
 
 if __name__ == "__main__":
-    iface.launch(css=CUSTOM_CSS, debug=True)
+    iface.launch(
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", 10000)),
+        debug=True
+    )
 
 
 '''from voice_of_the_user import speech_to_text
