@@ -342,13 +342,14 @@ def api_analyze():
 # ============================================================
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-
-    iface.launch(
-        server_name="0.0.0.0",
-        server_port=port,
-        debug=False,
-        share=False,
+    port = int(os.environ.get("PORT", 5000))
+    
+    # Start the Flask REST API instead of Gradio, 
+    # so the custom Netlify UI can connect to /api/analyze
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
     )
 
 
