@@ -221,60 +221,153 @@
   let audioFile = null;
   let imageFile = null;
   let videoFile = null;
+  let isRecording = false;
+  let mediaRecorder = null;
+  let recordedChunks = [];
 
-  // Elements
-  const audioUpload = document.querySelector('[data-icon="mic"]').closest('.group');
-  const imageUpload = document.querySelectorAll('button')[document.querySelectorAll('button').length - 3];
-  const videoUpload = document.querySelectorAll('button')[document.querySelectorAll('button').length - 2];
-  const analyzeBtn = document.querySelector('[data-icon="analytics"]').closest('button');
-  const responseSection = document.querySelector('[data-icon="assignment"]').closest('div').parentElement;
+  // Wait for DOM to load
+  document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+  });
 
-  // Audio upload
-  audioUpload.addEventListener('click', () => {
+  function setupEventListeners() {
+    // Find audio section - the dashed border container with mic icon
+    const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
+    if (audioSection) {
+      audioSection.addEventListener('click', handleAudioClick);
+      audioSection.style.cursor = 'pointer';
+    }
+
+    // Find image and video buttons in the grid
+    const gridButtons = document.querySelectorAll('.grid.grid-cols-2 button');
+    if (gridButtons.length >= 2) {
+      gridButtons[0].addEventListener('click', handleImageUpload); // Image button
+      gridButtons[1].addEventListener('click', handleVideoUpload); // Video button
+    }
+
+    // Find analyze button
+    const analyzeBtn = document.querySelector('[data-icon="analytics"]')?.closest('button');
+    if (analyzeBtn) {
+      analyzeBtn.addEventListener('click', handleAnalyze);
+    }
+  }
+
+  async function handleAudioClick() {
+    // Try to start recording first
+    if (!isRecording && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioChunks = [];
+        
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+          
+          const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
+          const pTag = audioSection?.querySelector('p');
+          if (pTag) {
+            pTag.textContent = '✓ Recording saved (recording.wav)';
+            pTag.classList.add('text-primary');
+          }
+          
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.start();
+        isRecording = true;
+        
+        const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
+        const pTag = audioSection?.querySelector('p');
+        if (pTag) {
+          pTag.textContent = '● Recording... (click again to stop)';
+          pTag.classList.add('text-status-error');
+        }
+        
+        // Auto-stop recording after 60 seconds
+        setTimeout(() => {
+          if (isRecording && mediaRecorder) {
+            mediaRecorder.stop();
+            isRecording = false;
+          }
+        }, 60000);
+        
+        return;
+      } catch (error) {
+        console.log('Microphone access denied, falling back to file upload:', error);
+      }
+    } else if (isRecording && mediaRecorder) {
+      // Stop recording
+      mediaRecorder.stop();
+      isRecording = false;
+      return;
+    }
+
+    // Fallback: file upload
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/*';
     input.onchange = (e) => {
-      audioFile = e.target.files[0];
-      const p = audioUpload.querySelector('p');
-      p.textContent = audioFile.name;
-      p.classList.add('text-primary');
+      if (e.target.files?.[0]) {
+        audioFile = e.target.files[0];
+        const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
+        const pTag = audioSection?.querySelector('p');
+        if (pTag) {
+          pTag.textContent = `✓ ${audioFile.name}`;
+          pTag.classList.add('text-primary');
+        }
+      }
     };
     input.click();
-  });
+  }
 
-  // Image upload
-  imageUpload.addEventListener('click', () => {
+  function handleImageUpload() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.onchange = (e) => {
-      imageFile = e.target.files[0];
-      imageUpload.querySelector('h3').textContent = imageFile.name;
-      imageUpload.classList.add('border-primary', 'bg-primary-fixed-dim');
+      if (e.target.files?.[0]) {
+        imageFile = e.target.files[0];
+        const gridButtons = document.querySelectorAll('.grid.grid-cols-2 button');
+        if (gridButtons[0]) {
+          const h3 = gridButtons[0].querySelector('h3');
+          if (h3) h3.textContent = imageFile.name;
+          gridButtons[0].classList.add('border-primary', 'bg-primary-fixed-dim');
+        }
+      }
     };
     input.click();
-  });
+  }
 
-  // Video upload
-  videoUpload.addEventListener('click', () => {
+  function handleVideoUpload() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'video/*';
     input.onchange = (e) => {
-      videoFile = e.target.files[0];
-      videoUpload.querySelector('h3').textContent = videoFile.name;
-      videoUpload.classList.add('border-primary', 'bg-primary-fixed-dim');
+      if (e.target.files?.[0]) {
+        videoFile = e.target.files[0];
+        const gridButtons = document.querySelectorAll('.grid.grid-cols-2 button');
+        if (gridButtons[1]) {
+          const h3 = gridButtons[1].querySelector('h3');
+          if (h3) h3.textContent = videoFile.name;
+          gridButtons[1].classList.add('border-primary', 'bg-primary-fixed-dim');
+        }
+      }
     };
     input.click();
-  });
+  }
 
-  // Analyze button
-  analyzeBtn.addEventListener('click', async () => {
+  async function handleAnalyze() {
     if (!imageFile) {
       alert('Please upload a skin image (required)');
       return;
     }
+
+    const analyzeBtn = document.querySelector('[data-icon="analytics"]')?.closest('button');
+    if (!analyzeBtn) return;
 
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = '⟳ Analyzing...';
@@ -283,6 +376,8 @@
     if (audioFile) formData.append('audio_input', audioFile);
     if (imageFile) formData.append('image_input', imageFile);
     if (videoFile) formData.append('video_input', videoFile);
+
+    const responseSection = document.querySelector('[data-icon="assignment"]')?.closest('div')?.parentElement;
 
     try {
       const response = await fetch(`${API_URL}/call/run_analysis`, {
@@ -294,41 +389,44 @@
       
       const data = await response.json();
       
-      // Update response section
-      responseSection.innerHTML = `
-        <div class="flex flex-col gap-4">
-          <div class="bg-surface-container-low rounded-lg p-4">
-            <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">AI Transcript</h4>
-            <p class="font-body-sm text-body-sm text-on-surface">${data.transcript || 'No audio provided'}</p>
+      if (responseSection) {
+        responseSection.innerHTML = `
+          <div class="flex flex-col gap-4">
+            <div class="bg-surface-container-low rounded-lg p-4">
+              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">AI Transcript</h4>
+              <p class="font-body-sm text-body-sm text-on-surface">${data.transcript || 'No audio provided'}</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-4">
+              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Medical Guidance</h4>
+              <p class="font-body-sm text-body-sm text-on-surface">${data.response || 'No response'}</p>
+            </div>
+            ${data.audio ? `
+            <div class="bg-surface-container-low rounded-lg p-4">
+              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Doctor's Voice</h4>
+              <audio controls class="w-full">
+                <source src="${data.audio}" type="audio/wav">
+              </audio>
+            </div>
+            ` : ''}
+            <p class="font-body-sm text-body-sm text-status-success">✓ Analysis complete</p>
           </div>
-          <div class="bg-surface-container-low rounded-lg p-4">
-            <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Medical Guidance</h4>
-            <p class="font-body-sm text-body-sm text-on-surface">${data.response || 'No response'}</p>
-          </div>
-          ${data.audio ? `
-          <div class="bg-surface-container-low rounded-lg p-4">
-            <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Doctor's Voice</h4>
-            <audio controls class="w-full">
-              <source src="${data.audio}" type="audio/wav">
-            </audio>
-          </div>
-          ` : ''}
-          <p class="font-body-sm text-body-sm text-status-success">✓ Analysis complete</p>
-        </div>
-      `;
+        `;
+      }
     } catch (error) {
       console.error('Error:', error);
-      responseSection.innerHTML = `
-        <div class="text-center">
-          <p class="font-body-md text-body-md text-status-error mb-2">❌ Error processing request</p>
-          <p class="font-body-sm text-body-sm text-on-surface-variant">${error.message}</p>
-          <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">Make sure your Render backend is running at ${API_URL}</p>
-        </div>
-      `;
+      if (responseSection) {
+        responseSection.innerHTML = `
+          <div class="text-center">
+            <p class="font-body-md text-body-md text-status-error mb-2">❌ Error processing request</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">${error.message}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">Make sure your Render backend is running at ${API_URL}</p>
+          </div>
+        `;
+      }
     } finally {
       analyzeBtn.disabled = false;
       analyzeBtn.textContent = '▣  Analyze Concern';
     }
-  });
+  }
 </script>
 </body></html>
