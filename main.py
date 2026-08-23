@@ -4,6 +4,10 @@ from brain_of_the_doc import brain_of_the_doctor
 from voice_of_the_doctor import text_to_speech
 
 import gradio as gr
+import tempfile
+from werkzeug.utils import secure_filename
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 
 CUSTOM_CSS = """
@@ -136,14 +140,16 @@ body, .gradio-container {
 # MAIN PROCESSING FUNCTION
 # ============================================================
 
-def process_inputs(audio_filepath, image_filepath):
+def process_inputs(audio_filepath, image_filepath, video_filepath=None):
 
     # --------------------------------------------------------
     # STEP 1: Patient Voice → Text
     # --------------------------------------------------------
 
-    patient_text = speech_to_text(
-        audio_filepath=audio_filepath
+    patient_text = (
+        speech_to_text(audio_filepath=audio_filepath)
+        if audio_filepath
+        else "No patient question was provided. Assess the skin image and give general skincare guidance."
     )
 
 
@@ -264,12 +270,80 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
 
 
 # ============================================================
+# FLASK REST API
+# ============================================================
+
+app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+@app.route('/api/analyze', methods=['POST'])
+def api_analyze():
+    """REST API endpoint for frontend"""
+    try:
+        # Get files from request
+        audio_file = request.files.get('audio_input')
+        image_file = request.files.get('image_input')
+        video_file = request.files.get('video_input')
+
+        if not image_file:
+            return jsonify({'error': 'Image file is required'}), 400
+
+        # Create temporary directory for files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Save image
+            image_path = os.path.join(temp_dir, secure_filename(image_file.filename))
+            image_file.save(image_path)
+
+            # Save audio if provided
+            audio_path = None
+            if audio_file:
+                audio_path = os.path.join(temp_dir, secure_filename(audio_file.filename))
+                audio_file.save(audio_path)
+
+            # Save video if provided
+            video_path = None
+            if video_file:
+                video_path = os.path.join(temp_dir, secure_filename(video_file.filename))
+                video_file.save(video_path)
+
+            # Call the analysis function and preserve failures as API errors.
+            try:
+                transcript, response_text, audio_output = process_inputs(
+                    audio_path,
+                    image_path,
+                    video_path,
+                )
+            except Exception as error:
+                return jsonify({'error': str(error)}), 500
+
+            # Read audio file if it was generated
+            audio_data = None
+            if audio_output and os.path.exists(str(audio_output)):
+                try:
+                    with open(str(audio_output), 'rb') as f:
+                        import base64
+                        audio_data = f"data:audio/wav;base64,{base64.b64encode(f.read()).decode()}"
+                except:
+                    pass
+
+            return jsonify({
+                'transcript': transcript,
+                'response': response_text,
+                'audio': audio_data
+            }), 200
+
+    except Exception as e:
+        print(f"Error in API: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================
 # LAUNCH APP
 # ============================================================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
-    
+
     iface.launch(
         server_name="0.0.0.0",
         server_port=port,
