@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Skin Specialist</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#b7c4ff",
+                      "surface-bright": "#f9f9ff",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "tertiary-fixed-dim": "#89ceff",
+                      "on-error-container": "#93000a",
+                      "on-error": "#ffffff",
+                      "surface-variant": "#dce2f7",
+                      "error-container": "#ffdad6",
+                      "tertiary-container": "#00628d",
+                      "on-secondary-container": "#54647a",
+                      "on-primary-fixed": "#001551",
+                      "status-success": "#10B981",
+                      "surface": "#f9f9ff",
+                      "outline": "#747686",
+                      "tertiary": "#00496b",
+                      "surface-subtle": "#F9FAFB",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#d3e4fe",
+                      "primary": "#0037b0",
+                      "on-primary-fixed-variant": "#0039b5",
+                      "secondary-container": "#d0e1fb",
+                      "tertiary-fixed": "#c9e6ff",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "inverse-on-surface": "#edf0ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed": "#0b1c30",
+                      "surface-container-low": "#f1f3ff",
+                      "on-tertiary-fixed-variant": "#004c6e",
+                      "on-surface-variant": "#434655",
+                      "on-surface": "#141b2b",
+                      "on-tertiary-container": "#abdaff",
+                      "inverse-primary": "#b7c4ff",
+                      "status-error": "#EF4444",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "background": "#f9f9ff",
+                      "surface-container-highest": "#dce2f7",
+                      "outline-variant": "#c4c5d7",
+                      "inverse-surface": "#293040",
+                      "on-background": "#141b2b",
+                      "surface-tint": "#2151da",
+                      "primary-fixed": "#dce1ff",
+                      "surface-container-high": "#e1e8fd",
+                      "on-tertiary-fixed": "#001e2f",
+                      "primary-container": "#1d4ed8",
+                      "secondary": "#505f76",
+                      "surface-dim": "#d3daef",
+                      "surface-container": "#e9edff",
+                      "border-light": "#E5E7EB",
+                      "on-primary-container": "#cad3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-margin": "24px",
+                      "component-padding-x": "16px",
+                      "section-gap": "64px",
+                      "base": "8px",
+                      "component-padding-y": "12px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["IBM Plex Sans"],
+                      "body-sm": ["IBM Plex Sans"],
+                      "headline-lg-mobile": ["IBM Plex Sans"],
+                      "display-lg": ["IBM Plex Sans"],
+                      "headline-md": ["IBM Plex Sans"],
+                      "label-sm": ["IBM Plex Sans"],
+                      "label-md": ["IBM Plex Sans"],
+                      "body-md": ["IBM Plex Sans"],
+                      "body-lg": ["IBM Plex Sans"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                      "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-subtle text-on-surface min-h-screen flex flex-col font-body-md">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-border-light flex justify-between items-center px-container-margin py-component-padding-y w-full sticky top-0 z-50">
+<div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">AI Skin Specialist</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Voice, image, and video based skin consultation assistant</p>
+</div>
+<button aria-label="Profile" class="text-primary hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</header>
+<main class="flex-grow flex flex-col max-w-[1440px] mx-auto w-full md:grid md:grid-cols-12 md:gap-gutter px-container-margin md:px-0 py-section-gap">
+<div class="md:col-span-12 flex flex-col gap-section-gap md:px-container-margin">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Patient Input Section -->
+<section class="md:col-span-6 flex flex-col gap-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary font-headline-md text-headline-md" data-icon="medical_services">medical_services</span>
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface">Patient Input</h2>
+</div>
+<div class="bg-surface border border-border-light rounded-xl p-6 shadow-sm">
+<div class="mb-6">
+<label class="block font-label-md text-label-md text-on-surface mb-3">Describe your skin concern</label>
+<div class="border-2 border-dashed border-outline-variant rounded-lg bg-surface-subtle p-8 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-colors cursor-pointer group">
+<button class="bg-primary-container text-on-primary w-16 h-16 rounded-full flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform mb-4">
+<span class="material-symbols-outlined" data-icon="mic" data-weight="fill" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+<p class="font-body-md text-body-md text-on-surface">Tap to record or upload audio</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-8">
+<button class="border border-border-light rounded-lg p-4 flex flex-col gap-3 text-left hover:border-primary hover:bg-surface-container-low transition-all items-start relative bg-surface">
+<div class="w-full flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="photo_camera">photo_camera</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Required</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Skin Image</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">High-res close-up of the area</p>
+</div>
+</button>
+<button class="border border-border-light rounded-lg p-4 flex flex-col gap-3 text-left hover:border-primary hover:bg-surface-container-low transition-all items-start relative bg-surface">
+<div class="w-full flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="videocam">videocam</span>
+<span class="font-label-sm text-label-sm text-outline font-bold uppercase tracking-wider">Optional</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Skin Video</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Short clip showing texture</p>
+</div>
+</button>
+</div>
+<button class="w-full bg-primary-container text-on-primary py-4 rounded-lg font-label-md text-label-md font-bold flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                            Analyze Concern
+                        </button>
+</div>
+<div class="bg-surface-container-low rounded-lg p-4 flex gap-3 items-start border border-primary-fixed-dim">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0" data-icon="info">info</span>
+<p class="font-body-sm text-body-sm text-on-primary-fixed">For better assessment, include a short video showing the affected area from multiple angles and under good lighting.</p>
+</div>
+</section>
+<!-- Doctor Response Section -->
+<section class="md:col-span-6 flex flex-col gap-6 mt-12 md:mt-0">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary font-headline-md text-headline-md" data-icon="smart_toy">smart_toy</span>
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface">Doctor Response</h2>
+</div>
+<div class="bg-surface border border-border-light rounded-xl p-8 shadow-sm flex flex-col items-center justify-center text-center min-h-[400px] h-full">
+<div class="w-24 h-24 bg-surface-container-low rounded-full flex items-center justify-center mb-6 text-outline-variant">
+<span class="material-symbols-outlined text-5xl" data-icon="assignment">assignment</span>
+</div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface mb-3">Ready for Analysis</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm">Your consultation summary, AI transcript, and medical guidance will appear here after you upload your concern.</p>
+</div>
+<div class="flex items-center justify-center gap-4 pt-4 border-t border-border-light opacity-70">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-lg" data-icon="verified_user">verified_user</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">HIPAA Compliant Encryption</span>
+</div>
+<div class="w-px h-4 bg-border-light"></div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Privacy Guaranteed</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low border-t border-border-light flex flex-col gap-4 px-container-margin py-section-gap w-full text-center md:text-left mt-auto">
+<div class="max-w-[1440px] mx-auto w-full flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
+<div class="flex flex-col gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">AI Skin Specialist</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-2xl">© 2024 AI Skin Specialist. For informational purposes only. AI guidance is not a medical diagnosis. Consult a licensed dermatologist for urgent or serious symptoms.</p>
+</div>
+<div class="flex gap-6 flex-wrap justify-center">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors pointer-cursor" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors pointer-cursor" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors pointer-cursor" href="#">Medical Disclaimer</a>
+</div>
+</div>
+</footer>
+</body></html>
