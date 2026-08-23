@@ -247,7 +247,9 @@
 </div>
 </footer>
 
-<script>
+<script type="module">
+  import { Client, handle_file } from "https://esm.sh/@gradio/client";
+
   const API_URL = "https://ai-skin-specialist-he3a.onrender.com";
   let audioFile = null;
   let audioDataURL = null;
@@ -256,10 +258,8 @@
   let isRecording = false;
   let mediaRecorder = null;
 
-  // Wait for DOM to load
-  document.addEventListener('DOMContentLoaded', () => {
-    setupEventListeners();
-  });
+  // Modules are deferred — DOM is already ready here.
+  setupEventListeners();
 
   function setupEventListeners() {
     // Find audio section - the dashed border container with mic icon
@@ -445,75 +445,52 @@
     if (!analyzeBtn) return;
 
     analyzeBtn.disabled = true;
-    
+
     const responseSection = document.querySelector('[data-icon="assignment"]')?.closest('div')?.parentElement;
 
-    // Show loading state
     if (responseSection) {
       responseSection.innerHTML = `
         <div class="flex flex-col gap-4 items-center justify-center min-h-[400px]">
           <div class="spinner"></div>
           <p class="font-body-md text-body-md text-on-surface-variant">Analyzing your concern...</p>
-          <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">This may take a moment</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">
+            First request may take ~50 s if the backend is waking up.
+          </p>
         </div>
       `;
     }
 
-    const formData = new FormData();
-    if (audioFile) formData.append('audio_input', audioFile);
-    if (imageFile) formData.append('image_input', imageFile);
-    if (videoFile) formData.append('video_input', videoFile);
-
     try {
-      // Try Gradio's native API endpoint
-      let response;
-      let endpoint = `${API_URL}/run/run_analysis`;
-      
-      try {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-        });
-      } catch (e) {
-        // Fallback to alternative Gradio endpoint
-        endpoint = `${API_URL}/api/predict/`;
-        response = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-        });
-      }
+      const client = await Client.connect(API_URL);
+      const result = await client.predict("/run_analysis", {
+        audio_filepath: audioFile ? handle_file(audioFile) : null,
+        image_filepath: handle_file(imageFile),
+      });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} - ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle Gradio response format
-      let transcript = data.data?.[0] || data.transcript || "No transcript";
-      let response_text = data.data?.[1] || data.response || "";
-      let audio_output = data.data?.[2] || data.audio || null;
-      
+      const [transcript, guidance, audioOutput] = result.data;
+      // audioOutput is a FileData object — use its .url property for <audio src>
+      const audioUrl = audioOutput?.url;
+
       if (responseSection) {
         responseSection.innerHTML = `
           <div class="flex flex-col gap-4 w-full">
-            ${transcript && transcript !== "No transcript" ? `
+            ${transcript ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">📝 AI Transcript</h4>
               <p class="font-body-sm text-body-sm text-on-surface">${transcript}</p>
             </div>
             ` : ''}
-            ${response_text ? `
+            ${guidance ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">💊 Medical Guidance</h4>
-              <p class="font-body-sm text-body-sm text-on-surface">${response_text}</p>
+              <p class="font-body-sm text-body-sm text-on-surface" style="white-space: pre-wrap">${guidance}</p>
             </div>
             ` : ''}
-            ${audio_output ? `
+            ${audioUrl ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">🔊 Doctor's Voice</h4>
               <audio controls class="w-full" style="height: 40px;">
-                <source src="${audio_output}" type="audio/wav">
+                <source src="${audioUrl}" type="audio/mpeg">
               </audio>
             </div>
             ` : ''}
@@ -540,7 +517,6 @@
       }
     } finally {
       analyzeBtn.disabled = false;
-      analyzeBtn.textContent = '▣  Analyze Concern';
     }
   }
 </script>

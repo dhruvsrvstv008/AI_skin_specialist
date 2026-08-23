@@ -259,6 +259,7 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
         inputs=[audio_input, image_input],
         outputs=[transcript_output, response_output, audio_output, status_output],
         show_progress="full",
+        api_name="run_analysis",
     )
 
 
