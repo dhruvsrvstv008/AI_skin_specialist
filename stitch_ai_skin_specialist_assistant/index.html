@@ -5,9 +5,8 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>AI Skin Specialist</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -109,6 +108,38 @@
 <style>
     body {
       min-height: max(884px, 100dvh);
+    }
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+    }
+    .spinner {
+      border: 4px solid rgba(29, 78, 216, 0.2);
+      border-top: 4px solid #1d4ed8;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 8px;
+      margin-top: 12px;
     }
   </style>
   </head>
@@ -221,9 +252,9 @@
   let audioFile = null;
   let imageFile = null;
   let videoFile = null;
+  let imagePreview = null;
   let isRecording = false;
   let mediaRecorder = null;
-  let recordedChunks = [];
 
   // Wait for DOM to load
   document.addEventListener('DOMContentLoaded', () => {
@@ -283,11 +314,11 @@
         const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
         const pTag = audioSection?.querySelector('p');
         if (pTag) {
-          pTag.textContent = '● Recording... (click again to stop)';
+          pTag.textContent = '● Recording... (click to stop)';
           pTag.classList.add('text-status-error');
         }
         
-        // Auto-stop recording after 60 seconds
+        // Auto-stop after 60 seconds
         setTimeout(() => {
           if (isRecording && mediaRecorder) {
             mediaRecorder.stop();
@@ -332,9 +363,35 @@
       if (e.target.files?.[0]) {
         imageFile = e.target.files[0];
         const gridButtons = document.querySelectorAll('.grid.grid-cols-2 button');
+        
         if (gridButtons[0]) {
-          const h3 = gridButtons[0].querySelector('h3');
-          if (h3) h3.textContent = imageFile.name;
+          // Create preview
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const imagePreviewHTML = `
+              <div class="w-full">
+                <img src="${event.target.result}" alt="Preview" class="image-preview">
+              </div>
+            `;
+            
+            // Clear and update the button content
+            const h3 = gridButtons[0].querySelector('h3');
+            if (h3) {
+              h3.innerHTML = `<span>✓ ${imageFile.name}</span>`;
+            }
+            
+            // Add preview after the button or in a designated area
+            const previewArea = gridButtons[0].closest('.grid')?.parentElement;
+            let existingPreview = previewArea?.querySelector('.image-preview-container');
+            if (!existingPreview) {
+              existingPreview = document.createElement('div');
+              existingPreview.className = 'image-preview-container mt-4';
+              previewArea?.insertBefore(existingPreview, gridButtons[0].closest('.grid'));
+            }
+            existingPreview.innerHTML = imagePreviewHTML;
+          };
+          reader.readAsDataURL(imageFile);
+          
           gridButtons[0].classList.add('border-primary', 'bg-primary-fixed-dim');
         }
       }
@@ -352,7 +409,7 @@
         const gridButtons = document.querySelectorAll('.grid.grid-cols-2 button');
         if (gridButtons[1]) {
           const h3 = gridButtons[1].querySelector('h3');
-          if (h3) h3.textContent = videoFile.name;
+          if (h3) h3.textContent = `✓ ${videoFile.name}`;
           gridButtons[1].classList.add('border-primary', 'bg-primary-fixed-dim');
         }
       }
@@ -370,39 +427,58 @@
     if (!analyzeBtn) return;
 
     analyzeBtn.disabled = true;
-    analyzeBtn.textContent = '⟳ Analyzing...';
+    
+    const responseSection = document.querySelector('[data-icon="assignment"]')?.closest('div')?.parentElement;
+
+    // Show loading state
+    if (responseSection) {
+      responseSection.innerHTML = `
+        <div class="flex flex-col gap-4 items-center justify-center min-h-[400px]">
+          <div class="spinner"></div>
+          <p class="font-body-md text-body-md text-on-surface-variant">Analyzing your concern...</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">This may take a moment</p>
+        </div>
+      `;
+    }
 
     const formData = new FormData();
     if (audioFile) formData.append('audio_input', audioFile);
     if (imageFile) formData.append('image_input', imageFile);
     if (videoFile) formData.append('video_input', videoFile);
 
-    const responseSection = document.querySelector('[data-icon="assignment"]')?.closest('div')?.parentElement;
-
     try {
-      const response = await fetch(`${API_URL}/call/run_analysis`, {
+      // Use the /api/analyze endpoint
+      const endpoint = `${API_URL}/api/analyze`;
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} - ${response.statusText}`);
+      }
       
       const data = await response.json();
       
       if (responseSection) {
         responseSection.innerHTML = `
-          <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-4 w-full">
+            ${data.transcript ? `
             <div class="bg-surface-container-low rounded-lg p-4">
-              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">AI Transcript</h4>
-              <p class="font-body-sm text-body-sm text-on-surface">${data.transcript || 'No audio provided'}</p>
+              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">📝 AI Transcript</h4>
+              <p class="font-body-sm text-body-sm text-on-surface">${data.transcript}</p>
             </div>
+            ` : ''}
+            ${data.response ? `
             <div class="bg-surface-container-low rounded-lg p-4">
-              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Medical Guidance</h4>
-              <p class="font-body-sm text-body-sm text-on-surface">${data.response || 'No response'}</p>
+              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">💊 Medical Guidance</h4>
+              <p class="font-body-sm text-body-sm text-on-surface">${data.response}</p>
             </div>
+            ` : ''}
             ${data.audio ? `
             <div class="bg-surface-container-low rounded-lg p-4">
-              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Doctor's Voice</h4>
+              <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">🔊 Doctor's Voice</h4>
               <audio controls class="w-full">
                 <source src="${data.audio}" type="audio/wav">
               </audio>
@@ -416,10 +492,16 @@
       console.error('Error:', error);
       if (responseSection) {
         responseSection.innerHTML = `
-          <div class="text-center">
+          <div class="text-center py-8">
             <p class="font-body-md text-body-md text-status-error mb-2">❌ Error processing request</p>
-            <p class="font-body-sm text-body-sm text-on-surface-variant">${error.message}</p>
-            <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">Make sure your Render backend is running at ${API_URL}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">${error.message}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Backend Status:</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-low rounded p-3 mt-3">
+              ${API_URL}
+            </p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">
+              Make sure your Render backend is running and CORS is enabled.
+            </p>
           </div>
         `;
       }

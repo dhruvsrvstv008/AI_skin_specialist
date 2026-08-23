@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^Rename-Item -Path \"stitch_ai_skin_specialist_assistant\\\\code\\.html\" -NewName \"index\\.html\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
