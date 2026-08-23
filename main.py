@@ -4,8 +4,6 @@ from brain_of_the_doc import brain_of_the_doctor
 from voice_of_the_doctor import text_to_speech
 
 import gradio as gr
-import tempfile
-from werkzeug.utils import secure_filename
 
 
 CUSTOM_CSS = """
