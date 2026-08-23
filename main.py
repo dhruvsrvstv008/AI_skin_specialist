@@ -284,6 +284,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get('/')
+async def root():
+    return {"message": "AI Skin Specialist Backend is Running"}
+
 @app.post('/api/analyze')
 async def api_analyze(
     audio_input: UploadFile = File(None),
@@ -347,7 +351,7 @@ async def api_analyze(
 
 
 # Mount Gradio app onto FastAPI
-app = gr.mount_gradio_app(app, iface, path="/")
+app = gr.mount_gradio_app(app, iface, path="/ui")
 
 # ============================================================
 # LAUNCH APP
