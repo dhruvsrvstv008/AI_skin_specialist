@@ -5,10 +5,11 @@ from voice_of_the_doctor import text_to_speech
 
 import gradio as gr
 import tempfile
-from werkzeug.utils import secure_filename
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-
+import base64
+from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import uvicorn
 
 CUSTOM_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
@@ -270,41 +271,50 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
 
 
 # ============================================================
-# FLASK REST API
+# FASTAPI REST API + GRADIO MOUNT
 # ============================================================
 
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+app = FastAPI()
 
-@app.route('/api/analyze', methods=['POST'])
-def api_analyze():
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post('/api/analyze')
+async def api_analyze(
+    audio_input: UploadFile = File(None),
+    image_input: UploadFile = File(None),
+    video_input: UploadFile = File(None)
+):
     """REST API endpoint for frontend"""
     try:
-        # Get files from request
-        audio_file = request.files.get('audio_input')
-        image_file = request.files.get('image_input')
-        video_file = request.files.get('video_input')
-
-        if not image_file:
-            return jsonify({'error': 'Image file is required'}), 400
+        if not image_input:
+            return JSONResponse(status_code=400, content={'error': 'Image file is required'})
 
         # Create temporary directory for files
         with tempfile.TemporaryDirectory() as temp_dir:
             # Save image
-            image_path = os.path.join(temp_dir, secure_filename(image_file.filename))
-            image_file.save(image_path)
+            image_path = os.path.join(temp_dir, image_input.filename)
+            with open(image_path, "wb") as f:
+                f.write(await image_input.read())
 
             # Save audio if provided
             audio_path = None
-            if audio_file:
-                audio_path = os.path.join(temp_dir, secure_filename(audio_file.filename))
-                audio_file.save(audio_path)
+            if audio_input:
+                audio_path = os.path.join(temp_dir, audio_input.filename)
+                with open(audio_path, "wb") as f:
+                    f.write(await audio_input.read())
 
             # Save video if provided
             video_path = None
-            if video_file:
-                video_path = os.path.join(temp_dir, secure_filename(video_file.filename))
-                video_file.save(video_path)
+            if video_input:
+                video_path = os.path.join(temp_dir, video_input.filename)
+                with open(video_path, "wb") as f:
+                    f.write(await video_input.read())
 
             # Call the analysis function and preserve failures as API errors.
             try:
@@ -314,28 +324,30 @@ def api_analyze():
                     video_path,
                 )
             except Exception as error:
-                return jsonify({'error': str(error)}), 500
+                return JSONResponse(status_code=500, content={'error': str(error)})
 
             # Read audio file if it was generated
             audio_data = None
             if audio_output and os.path.exists(str(audio_output)):
                 try:
                     with open(str(audio_output), 'rb') as f:
-                        import base64
                         audio_data = f"data:audio/wav;base64,{base64.b64encode(f.read()).decode()}"
                 except:
                     pass
 
-            return jsonify({
+            return JSONResponse(status_code=200, content={
                 'transcript': transcript,
                 'response': response_text,
                 'audio': audio_data
-            }), 200
+            })
 
     except Exception as e:
         print(f"Error in API: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return JSONResponse(status_code=500, content={'error': str(e)})
 
+
+# Mount Gradio app onto FastAPI
+app = gr.mount_gradio_app(app, iface, path="/")
 
 # ============================================================
 # LAUNCH APP
@@ -343,14 +355,7 @@ def api_analyze():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    
-    # Start the Flask REST API instead of Gradio, 
-    # so the custom Netlify UI can connect to /api/analyze
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=False
-    )
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 '''from voice_of_the_user import speech_to_text
