@@ -87,10 +87,7 @@ SAFETY REQUIREMENTS
     prompt = f"Patient question: {patient_text}"
 
     response = client.chat.completions.create(
-        model=os.environ.get(
-            "GROQ_MODEL",
-            "llama-3.2-90b-vision-preview" # Using llama model which has vision
-        ),
+        model="llama-3.2-11b-vision-preview",
         max_completion_tokens=2000,
         messages=[
             {
