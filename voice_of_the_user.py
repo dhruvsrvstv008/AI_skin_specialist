@@ -23,7 +23,7 @@ def speech_to_text(audio_filepath):
 
     client = Groq(api_key=api_key)
 
-    print("\n🧠 Transcribing patient's voice with Groq Whisper...")
+    print("\nTranscribing patient's voice with Groq Whisper...")
 
     with open(audio_filepath, "rb") as audio_file:
 

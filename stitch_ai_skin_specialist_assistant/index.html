@@ -250,6 +250,24 @@
 <script>
   const API_URL = "http://127.0.0.1:5000";
   let audioFile = null;
+
+  window.toggleGuidance = function() {
+    const container = document.getElementById('guidance-container');
+    const fade = document.getElementById('guidance-fade');
+    const btn = document.getElementById('guidance-more-btn');
+    if (!container || !fade || !btn) return;
+    
+    if (container.style.maxHeight === '150px') {
+      container.style.maxHeight = 'none';
+      fade.style.display = 'none';
+      btn.textContent = 'show less';
+    } else {
+      container.style.maxHeight = '150px';
+      fade.style.display = 'block';
+      btn.textContent = 'more...';
+    }
+  };
+
   let audioDataURL = null;
   let imageFile = null;
   let videoFile = null;
@@ -492,13 +510,17 @@
             ${guidance ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">💊 Medical Guidance</h4>
-              <p class="font-body-sm text-body-sm text-on-surface" style="white-space: pre-wrap">${guidance}</p>
+              <div id="guidance-container" class="relative overflow-hidden transition-all duration-300" style="max-height: 150px;">
+                <p class="font-body-sm text-body-sm text-on-surface" style="white-space: pre-wrap">${guidance}</p>
+                <div id="guidance-fade" class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-surface-container-low to-transparent pointer-events-none"></div>
+              </div>
+              <button id="guidance-more-btn" onclick="toggleGuidance()" class="text-primary text-sm font-semibold mt-2 hover:underline">more...</button>
             </div>
             ` : ''}
             ${audioUrl ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">🔊 Doctor's Voice</h4>
-              <audio controls class="w-full" style="height: 40px;">
+              <audio controls autoplay class="w-full" style="height: 40px;">
                 <source src="${audioUrl}" type="audio/mpeg">
               </audio>
             </div>

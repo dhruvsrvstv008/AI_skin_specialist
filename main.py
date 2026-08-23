@@ -247,7 +247,7 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
                         interactive=False,
                         elem_classes="response-field",
                     )
-                    audio_output = gr.Audio(label="Doctor's Voice", interactive=False, elem_classes="response-field")
+                    audio_output = gr.Audio(label="Doctor's Voice", interactive=False, autoplay=True, elem_classes="response-field")
                     status_output = gr.HTML('<span class="status">Ready for analysis.</span>')
                 gr.HTML('<div class="trust">♢ &nbsp; HIPAA Compliant Encryption &nbsp;&nbsp; | &nbsp;&nbsp; Privacy Guaranteed</div>')
 
