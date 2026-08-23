@@ -9,10 +9,8 @@ dependencies = [
     "deepgram-sdk>=7.7.0",
     "gradio>=6.25.0",
     "groq>=1.6.0",
-    "pyaudio>=0.2.14",
     "python-dotenv>=1.2.3",
     "sarvamai>=0.1.30",
-    "speechrecognition>=3.17.0",
 ]
 
 [project.scripts]
