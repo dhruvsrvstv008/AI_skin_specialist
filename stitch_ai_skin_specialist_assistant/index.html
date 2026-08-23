@@ -250,9 +250,9 @@
 <script>
   const API_URL = "https://ai-skin-specialist-he3a.onrender.com";
   let audioFile = null;
+  let audioDataURL = null;
   let imageFile = null;
   let videoFile = null;
-  let imagePreview = null;
   let isRecording = false;
   let mediaRecorder = null;
 
@@ -298,12 +298,13 @@
           const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
           audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
           
-          const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
-          const pTag = audioSection?.querySelector('p');
-          if (pTag) {
-            pTag.textContent = '✓ Recording saved (recording.wav)';
-            pTag.classList.add('text-primary');
-          }
+          // Create data URL for preview
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            audioDataURL = e.target.result;
+            updateAudioPreview();
+          };
+          reader.readAsDataURL(audioBlob);
           
           stream.getTracks().forEach(track => track.stop());
         };
@@ -344,15 +345,32 @@
     input.onchange = (e) => {
       if (e.target.files?.[0]) {
         audioFile = e.target.files[0];
-        const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
-        const pTag = audioSection?.querySelector('p');
-        if (pTag) {
-          pTag.textContent = `✓ ${audioFile.name}`;
-          pTag.classList.add('text-primary');
-        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          audioDataURL = event.target.result;
+          updateAudioPreview();
+        };
+        reader.readAsDataURL(audioFile);
       }
     };
     input.click();
+  }
+
+  function updateAudioPreview() {
+    const audioSection = document.querySelector('[data-icon="mic"]')?.closest('.group');
+    const pTag = audioSection?.querySelector('p');
+    
+    if (pTag) {
+      pTag.innerHTML = `
+        <span class="text-primary">✓ Recording saved</span>
+        <div style="margin-top: 8px;">
+          <audio controls style="width: 100%; height: 32px;">
+            <source src="${audioDataURL}" type="audio/wav">
+          </audio>
+        </div>
+      `;
+      pTag.classList.add('text-primary');
+    }
   }
 
   function handleImageUpload() {
@@ -447,13 +465,23 @@
     if (videoFile) formData.append('video_input', videoFile);
 
     try {
-      // Use the /api/analyze endpoint
-      const endpoint = `${API_URL}/api/analyze`;
+      // Try Gradio's native API endpoint
+      let response;
+      let endpoint = `${API_URL}/run/run_analysis`;
       
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+      } catch (e) {
+        // Fallback to alternative Gradio endpoint
+        endpoint = `${API_URL}/api/predict/`;
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status} - ${response.statusText}`);
@@ -461,26 +489,31 @@
       
       const data = await response.json();
       
+      // Handle Gradio response format
+      let transcript = data.data?.[0] || data.transcript || "No transcript";
+      let response_text = data.data?.[1] || data.response || "";
+      let audio_output = data.data?.[2] || data.audio || null;
+      
       if (responseSection) {
         responseSection.innerHTML = `
           <div class="flex flex-col gap-4 w-full">
-            ${data.transcript ? `
+            ${transcript && transcript !== "No transcript" ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">📝 AI Transcript</h4>
-              <p class="font-body-sm text-body-sm text-on-surface">${data.transcript}</p>
+              <p class="font-body-sm text-body-sm text-on-surface">${transcript}</p>
             </div>
             ` : ''}
-            ${data.response ? `
+            ${response_text ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">💊 Medical Guidance</h4>
-              <p class="font-body-sm text-body-sm text-on-surface">${data.response}</p>
+              <p class="font-body-sm text-body-sm text-on-surface">${response_text}</p>
             </div>
             ` : ''}
-            ${data.audio ? `
+            ${audio_output ? `
             <div class="bg-surface-container-low rounded-lg p-4">
               <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">🔊 Doctor's Voice</h4>
-              <audio controls class="w-full">
-                <source src="${data.audio}" type="audio/wav">
+              <audio controls class="w-full" style="height: 40px;">
+                <source src="${audio_output}" type="audio/wav">
               </audio>
             </div>
             ` : ''}
@@ -493,14 +526,14 @@
       if (responseSection) {
         responseSection.innerHTML = `
           <div class="text-center py-8">
-            <p class="font-body-md text-body-md text-status-error mb-2">❌ Error processing request</p>
-            <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">${error.message}</p>
-            <p class="font-body-sm text-body-sm text-on-surface-variant">Backend Status:</p>
-            <p class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-low rounded p-3 mt-3">
-              ${API_URL}
-            </p>
-            <p class="font-body-sm text-body-sm text-on-surface-variant mt-4">
-              Make sure your Render backend is running and CORS is enabled.
+            <p class="font-body-md text-body-md text-status-error mb-2">❌ Connection Error</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mb-4">${error.message}</p>
+            <div class="bg-surface-container-low rounded p-4 mb-4">
+              <p class="font-label-sm text-label-sm text-on-surface-variant mb-2">⏳ Status Check:</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant font-mono">${API_URL}</p>
+            </div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">
+              Your Render backend might be sleeping. Give it a moment to wake up and try again.
             </p>
           </div>
         `;

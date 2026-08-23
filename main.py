@@ -4,8 +4,6 @@ from brain_of_the_doc import brain_of_the_doctor
 from voice_of_the_doctor import text_to_speech
 
 import gradio as gr
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 import tempfile
 from werkzeug.utils import secure_filename
 
@@ -274,84 +272,19 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
 
 
 # ============================================================
-# FLASK REST API
-# ============================================================
-
-app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-@app.route('/api/analyze', methods=['POST'])
-def api_analyze():
-    """REST API endpoint for frontend"""
-    try:
-        # Get files from request
-        audio_file = request.files.get('audio_input')
-        image_file = request.files.get('image_input')
-        video_file = request.files.get('video_input')
-        
-        if not image_file:
-            return jsonify({'error': 'Image file is required'}), 400
-        
-        # Create temporary directory for files
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Save image
-            image_path = os.path.join(temp_dir, secure_filename(image_file.filename))
-            image_file.save(image_path)
-            
-            # Save audio if provided
-            audio_path = None
-            if audio_file:
-                audio_path = os.path.join(temp_dir, secure_filename(audio_file.filename))
-                audio_file.save(audio_path)
-            
-            # Save video if provided
-            video_path = None
-            if video_file:
-                video_path = os.path.join(temp_dir, secure_filename(video_file.filename))
-                video_file.save(video_path)
-            
-            # Call the analysis function
-            result = run_analysis(audio_path, image_path, video_path)
-            
-            # Parse results
-            transcript = result[0] if result[0] else "No audio provided"
-            response_text = result[1] if result[1] else ""
-            audio_output = result[2] if len(result) > 2 else None
-            
-            # Read audio file if it was generated
-            audio_data = None
-            if audio_output and os.path.exists(str(audio_output)):
-                try:
-                    with open(str(audio_output), 'rb') as f:
-                        import base64
-                        audio_data = f"data:audio/wav;base64,{base64.b64encode(f.read()).decode()}"
-                except:
-                    pass
-            
-            return jsonify({
-                'transcript': transcript,
-                'response': response_text,
-                'audio': audio_data
-            }), 200
-            
-    except Exception as e:
-        print(f"Error in API: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-
-# ============================================================
 # LAUNCH APP
 # ============================================================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
     
-    # Launch Gradio with the Flask app mounted
+    # Launch Gradio with API enabled
     iface.launch(
         server_name="0.0.0.0",
         server_port=port,
         debug=False,
-        share=False
+        share=False,
+        api_open=True  # Enable API access
     )
 
 
