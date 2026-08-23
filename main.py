@@ -136,7 +136,7 @@ body, .gradio-container {
 # MAIN PROCESSING FUNCTION
 # ============================================================
 
-def process_inputs(audio_filepath, image_filepath, video_filepath):
+def process_inputs(audio_filepath, image_filepath):
 
     # --------------------------------------------------------
     # STEP 1: Patient Voice → Text
@@ -177,13 +177,12 @@ def process_inputs(audio_filepath, image_filepath, video_filepath):
     )
 
 
-def run_analysis(audio_filepath, image_filepath, video_filepath):
+def run_analysis(audio_filepath, image_filepath):
     """Run the consultation and turn failures into useful UI feedback."""
     try:
         patient_text, doctor_text, doctor_audio = process_inputs(
             audio_filepath,
             image_filepath,
-            video_filepath,
         )
         return patient_text, doctor_text, doctor_audio, "<span class='status success'>Analysis complete. Review the guidance below.</span>"
     except Exception as error:
@@ -199,7 +198,7 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
         """
         <header class="topbar">
             <h1>AI Skin Specialist</h1>
-            <p>Voice, image, and video based skin consultation assistant</p>
+            <p>Voice and image based skin consultation assistant</p>
         </header>
         """
     )
@@ -216,20 +215,14 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
                         label="Patient voice",
                         elem_classes="media-field",
                     )
-                    with gr.Row():
-                        image_input = gr.Image(
-                            type="filepath",
-                            sources=["upload", "webcam"],
-                            label="Skin image (required)",
-                            elem_classes="media-field",
-                        )
-                        video_input = gr.Video(
-                            sources=["upload", "webcam"],
-                            label="Skin video (optional)",
-                            elem_classes="media-field",
-                        )
+                    image_input = gr.Image(
+                        type="filepath",
+                        sources=["upload", "webcam"],
+                        label="Skin image (required)",
+                        elem_classes="media-field",
+                    )
                     analyze_button = gr.Button("▣  Analyze Concern", elem_classes="analyze-button")
-                gr.HTML('<div class="tip">ⓘ &nbsp; For better assessment, include a short video showing the affected area from multiple angles and under good lighting.</div>')
+                gr.HTML('<div class="tip">ⓘ &nbsp; For better assessment, photograph the affected area under good lighting and include all visible symptoms.</div>')
 
             with gr.Column(scale=1):
                 gr.HTML('<div class="section-title"><span class="section-icon">◈</span><h2>Doctor Response</h2></div>')
@@ -263,7 +256,7 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
 
     analyze_button.click(
         fn=run_analysis,
-        inputs=[audio_input, image_input, video_input],
+        inputs=[audio_input, image_input],
         outputs=[transcript_output, response_output, audio_output, status_output],
         show_progress="full",
     )
@@ -276,13 +269,11 @@ with gr.Blocks(title="AI Skin Specialist") as iface:
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
     
-    # Launch Gradio with API enabled
     iface.launch(
         server_name="0.0.0.0",
         server_port=port,
         debug=False,
         share=False,
-        api_open=True  # Enable API access
     )
 
 
