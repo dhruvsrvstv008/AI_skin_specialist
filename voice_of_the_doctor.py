@@ -1,5 +1,3 @@
-
-
 import os
 import platform
 import subprocess
@@ -9,43 +7,23 @@ from dotenv import load_dotenv
 from deepgram import DeepgramClient
 
 
-# ============================================================
-# STEP 1: Load environment variables
-# ============================================================
-
-folder = Path(__file__).parent
-env_path = folder / ".env"
-
-load_dotenv(env_path)
-
-api_key = os.environ.get("DEEPGRAM_API_KEY")
-
-if not api_key:
-    raise ValueError("Missing DEEPGRAM_API_KEY in .env")
+load_dotenv(Path(__file__).parent / ".env")
 
 
-# ============================================================
-# STEP 2: Create Deepgram client
-# ============================================================
-
-deepgram = DeepgramClient(api_key=api_key)
-
-
-# ============================================================
-# STEP 3: Text to Speech function
-# ============================================================
-
-def text_to_speech(
-    text,
-    output_filename="test-output.mp3"
-):
+def text_to_speech(text, output_path=None):
     """
-    Convert text into speech using Deepgram
-    and save the audio as an MP3 file.
+    Convert text into speech using Deepgram and save as an MP3 file.
+    Returns the path to the saved file.
     """
 
     if not text:
         raise ValueError("Text cannot be empty.")
+
+    api_key = os.environ.get("DEEPGRAM_API_KEY")
+    if not api_key:
+        raise ValueError("DEEPGRAM_API_KEY is not set.")
+
+    deepgram = DeepgramClient(api_key=api_key)
 
     text = text[:2000]
 
@@ -55,123 +33,41 @@ def text_to_speech(
         encoding="mp3",
     )
 
-    audio_path = folder / output_filename
+    if output_path is None:
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile(
+            suffix=".mp3", delete=False
+        )
+        output_path = Path(tmp.name)
+        tmp.close()
 
-    with audio_path.open("wb") as file:
+    output_path = Path(output_path)
+    with output_path.open("wb") as file:
         for chunk in audio:
             file.write(chunk)
 
-    print(f"Audio saved successfully: {audio_path}")
+    print(f"Audio saved successfully: {output_path}")
 
-    return audio_path
+    return output_path
 
-
-# ============================================================
-# STEP 4: Play audio function
-# ============================================================
 
 def play_audio(audio_path):
-    """
-    Play the generated audio file
-    according to the operating system.
-    """
+    """Play the generated audio file according to the operating system."""
 
     system = platform.system()
 
     if system == "Darwin":
-        # macOS
-        subprocess.run(
-            ["afplay", str(audio_path)]
-        )
-
+        subprocess.run(["afplay", str(audio_path)])
     elif system == "Windows":
-        # Windows
         os.startfile(audio_path)
-
     else:
-        # Linux
-        subprocess.run(
-            ["xdg-open", str(audio_path)]
-        )
+        subprocess.run(["xdg-open", str(audio_path)])
 
-
-# ============================================================
-# STEP 5: Test the functions
-# ============================================================
 
 if __name__ == "__main__":
-
     text = (
         "Hi, my name is Whisperer. "
         "How can I help you today?"
     )
-
-    audio_path = text_to_speech(
-        text=text,
-        output_filename="test-output.mp3"
-    )
-
+    audio_path = text_to_speech(text=text)
     play_audio(audio_path)
-
-
-'''
-import os
-from pathlib import Path
-
-from dotenv import load_dotenv
-from deepgram import DeepgramClient
-
-
-# Step 1: Load environment variables
-
-load_dotenv()
-
-api_key = os.environ.get("DEEPGRAM_API_KEY")
-
-if not api_key:
-    raise ValueError("Missing DEEPGRAM_API_KEY in .env")
-
-
-# Step 2: Create Deepgram client
-
-deepgram = DeepgramClient(api_key=api_key)
-
-
-# Step 3: Text to Speech
-
-text = "Hi, my name is Whisperer. How can I help you today?"
-
-audio = deepgram.speak.v1.audio.generate(
-    text=text,
-    model="aura-2-thalia-en",
-    encoding="mp3",
-)
-
-
-# Step 4: Save audio
-
-audio_file = "test-output.mp3"
-audio_path = Path(__file__).with_name(audio_file)
-
-with audio_path.open("wb") as file:
-    for chunk in audio:
-        file.write(chunk)
-
-
-print(f"Audio saved successfully: {audio_path}")
-
-
-
-# Step5: Play audio
-import platform
-import subprocess
-
-if platform.system() == "Darwin":  # macOS
-    subprocess.run(["afplay", str(audio_path)])
-elif platform.system() == "Windows":
-    os.startfile(audio_path)
-else:  # Linux
-    subprocess.run(["xdg-open", str(audio_path)])
-
-
-'''
