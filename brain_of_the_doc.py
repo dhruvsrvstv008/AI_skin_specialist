@@ -15,9 +15,22 @@ def get_media_type(filepath, fallback="image/png"):
     return media_type or fallback
 
 
+import io
+from PIL import Image
+
 def encode_file(filepath):
-    with open(filepath, "rb") as file:
-        return base64.b64encode(file.read()).decode("utf-8")
+    try:
+        img = Image.open(filepath)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        # Resize image to speed up API processing
+        img.thumbnail((512, 512))
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+    except Exception:
+        with open(filepath, "rb") as file:
+            return base64.b64encode(file.read()).decode("utf-8")
 
 
 def brain_of_the_doctor(patient_text, image_filepath=None):
@@ -36,9 +49,10 @@ def brain_of_the_doctor(patient_text, image_filepath=None):
     media_type = get_media_type(image_filepath, "image/png")
 
     system_prompt = """You are a helpful AI skin care assistant. 
-Generate a clean, patient-facing skin consultation.
+Generate a clean, CONCISE patient-facing skin consultation.
 CRITICAL INSTRUCTION: You MUST NOT output any internal reasoning, chain of thought, or "Thinking Process". 
 You MUST start your response directly with the Disclaimer. Do NOT use any <think> tags. Do NOT use ** for bolding anywhere.
+Keep your ENTIRE response under 150 words total to ensure fast processing.
 
 REQUIRED RESPONSE STRUCTURE
 
@@ -51,7 +65,7 @@ Describe the visible skin concerns objectively. Use cautious language such as "T
 3. What It May Be
 Explain what the appearance could commonly be associated with. If the image appears consistent with acne, explain that clearly in simple language. Do not overstate severity unless the evidence supports it.
 
-4. Treatment Plan
+4. Treatment Plan (Solutions)
 Provide a practical, step-by-step treatment routine that the user can follow or discuss with a dermatologist. Provide specific morning and night routines including Cleanser, Treatment, Moisturizer, and Sunscreen, explaining what each step does.
 
 5. Important Things to Avoid
@@ -84,11 +98,11 @@ SAFETY REQUIREMENTS
 - For over-the-counter treatments, provide general evidence-based guidance.
 """
 
-    prompt = f"Patient question: {patient_text}"
+    prompt = f"Patient question: {patient_text}\n\nStart your response immediately with '1. Disclaimer'."
 
     response = client.chat.completions.create(
-        model=os.environ.get("GROQ_MODEL", "qwen/qwen3.6-27b"),
-        max_completion_tokens=2000,
+        model=os.environ.get("GROQ_MODEL", "llama-3.2-11b-vision-preview"),
+        max_completion_tokens=1000,
         messages=[
             {
                 "role": "system",
@@ -115,7 +129,16 @@ SAFETY REQUIREMENTS
         ]
     )
 
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    
+    # Post-processing to remove any thinking process that might have leaked
+    if "1. Disclaimer" in content:
+        parts = content.split("1. Disclaimer")
+        # Take everything after the first occurrence, and join in case there are multiple
+        # We only want the disclaimer to appear ONCE at the very top.
+        content = "1. Disclaimer" + "".join(parts[1:])
+
+    return content
 
 
 if __name__ == "__main__":
