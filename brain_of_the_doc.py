@@ -73,7 +73,7 @@ FORMATTING REQUIREMENTS:
 
     response = client.chat.completions.create(
         model=os.environ.get("GROQ_MODEL", "qwen/qwen3.6-27b"),
-        max_completion_tokens=600,
+        max_completion_tokens=1000,
         messages=[
             {
                 "role": "system",
