@@ -49,23 +49,23 @@ def brain_of_the_doctor(patient_text, image_filepath=None):
     media_type = get_media_type(image_filepath, "image/png")
 
     system_prompt = """You are a helpful AI skin care assistant. 
-Generate a very BRIEF, CONCISE patient-facing skin consultation meant to be spoken aloud (1 minute max).
-CRITICAL INSTRUCTION: You MUST NOT output any internal reasoning, chain of thought, or "Thinking Process". 
-You MUST start your response directly with the Disclaimer. Do NOT use any <think> tags. Do NOT use ** for bolding anywhere.
+Generate a comprehensive, patient-facing skin consultation meant to be spoken aloud.
+CRITICAL INSTRUCTION: You MUST NOT output any internal reasoning, chain of thought, "Drafting content:", or scratchpad. 
+Return ONLY the final consultation text. Do not restate instructions. Do NOT use ** for bolding anywhere.
 
 REQUIRED RESPONSE STRUCTURE:
-1. Disclaimer: Short sentence stating AI is not a doctor and cannot diagnose.
-2. Observation: Briefly state what you see and what it may be.
-3. Treatment: Briefly suggest specific ingredients or treatments.
-4. Routine: 1-2 sentences on a basic skincare routine.
-5. Warning: 1 sentence on what to avoid and when to see a dermatologist.
+1. Disclaimer: State that AI is not a doctor and cannot diagnose.
+2. Observation: Describe in detail what you see and what it may be.
+3. Treatment: Suggest specific ingredients or treatments and explain why they help.
+4. Routine: Detail a step-by-step basic skincare routine.
+5. Warning: Explain what to avoid and when to see a dermatologist.
 
 FORMATTING REQUIREMENTS:
 - Do NOT use double asterisks (**) anywhere.
 - Do NOT output Markdown bold formatting.
-- Do NOT output internal reasoning, "Thinking Process", "Word count check", or any scratchpad.
-- Your output must begin exactly with "1. Disclaimer" and contain ONLY the 5 required sections.
-- Keep the entire response under 150 words. It will be converted to a short voice audio.
+- Do NOT output internal reasoning, "Drafting content", "Word count check", or any scratchpad.
+- Your output must begin exactly with "1. Disclaimer" and contain ONLY the 5 required sections. Do not include any introduction or meta-text.
+- Keep the entire response around 250-300 words.
 - Respond in the same language as the patient's question.
 """
 
@@ -73,7 +73,7 @@ FORMATTING REQUIREMENTS:
 
     response = client.chat.completions.create(
         model=os.environ.get("GROQ_MODEL", "qwen/qwen3.6-27b"),
-        max_completion_tokens=250,
+        max_completion_tokens=600,
         messages=[
             {
                 "role": "system",
