@@ -48,32 +48,28 @@ def brain_of_the_doctor(patient_text, image_filepath=None):
 
     media_type = get_media_type(image_filepath, "image/png")
 
-    system_prompt = """You are a helpful AI skin care assistant. 
-Generate a comprehensive, patient-facing skin consultation meant to be spoken aloud.
-CRITICAL INSTRUCTION: You MUST NOT output any internal reasoning, chain of thought, "Drafting content:", or scratchpad. 
-Return ONLY the final consultation text. Do not restate instructions. Do NOT use ** for bolding anywhere.
+    system_prompt = """You are a medical AI skin care assistant. 
+You may use a scratchpad to analyze the image and draft your response, but you MUST provide your final consultation at the very end wrapped exactly in <FINAL_RESPONSE> and </FINAL_RESPONSE> tags.
 
-REQUIRED RESPONSE STRUCTURE:
+REQUIRED RESPONSE STRUCTURE (Inside <FINAL_RESPONSE>):
 1. Disclaimer: State that AI is not a doctor and cannot diagnose.
 2. Observation: Describe in detail what you see and what it may be.
 3. Treatment Plan (Solutions): Suggest specific ingredients or treatments and explain why they help.
 4. Routine: Detail a step-by-step basic skincare routine.
 5. Important Things to Avoid: Explain what to avoid (e.g., picking pimples, harsh scrubs) and when to see a dermatologist.
 
-FORMATTING REQUIREMENTS:
+FORMATTING REQUIREMENTS FOR FINAL RESPONSE:
 - Do NOT use double asterisks (**) anywhere.
 - Do NOT output Markdown bold formatting.
-- Do NOT output internal reasoning, "Drafting content", "Word count check", or any scratchpad.
-- Your output must begin exactly with "1. Disclaimer" and contain ONLY the 5 required sections. Do not include any introduction or meta-text.
-- Keep the entire response around 250-300 words.
-- Respond in the same language as the patient's question.
+- Your final response must begin exactly with "1. Disclaimer" and contain ONLY the 5 sections. Do not include introductory text.
+- Keep the final response around 250-300 words.
 """
 
-    prompt = f"Patient question: {patient_text}\n\nStart your response immediately with '1. Disclaimer'."
+    prompt = f"Patient question: {patient_text}\n\nProvide your analysis and then output the final consultation wrapped in <FINAL_RESPONSE> tags."
 
     response = client.chat.completions.create(
         model=os.environ.get("GROQ_MODEL", "qwen/qwen3.6-27b"),
-        max_completion_tokens=1000,
+        max_completion_tokens=1200,
         messages=[
             {
                 "role": "system",
@@ -102,12 +98,21 @@ FORMATTING REQUIREMENTS:
 
     content = response.choices[0].message.content
     
-    # Post-processing to remove any thinking process that might have leaked
-    if "1. Disclaimer" in content:
-        parts = content.split("1. Disclaimer")
-        # Take everything after the first occurrence, and join in case there are multiple
-        # We only want the disclaimer to appear ONCE at the very top.
-        content = "1. Disclaimer" + "".join(parts[1:])
+    # Post-processing to extract ONLY the final response
+    if "<FINAL_RESPONSE>" in content:
+        content = content.split("<FINAL_RESPONSE>")[-1]
+        if "</FINAL_RESPONSE>" in content:
+            content = content.split("</FINAL_RESPONSE>")[0]
+        content = content.strip()
+    else:
+        # Fallback if the model forgot the tags but leaked scratchpad
+        if "Drafting the content" in content or "Refining for length" in content:
+            if "1. Disclaimer" in content:
+                parts = content.split("1. Disclaimer")
+                content = "1. Disclaimer" + parts[-1]
+        elif "1. Disclaimer" in content:
+            parts = content.split("1. Disclaimer")
+            content = "1. Disclaimer" + parts[-1]
 
     return content
 
