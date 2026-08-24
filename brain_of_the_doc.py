@@ -72,7 +72,7 @@ FORMATTING REQUIREMENTS:
     prompt = f"Patient question: {patient_text}\n\nStart your response immediately with '1. Disclaimer'."
 
     response = client.chat.completions.create(
-        model=os.environ.get("GROQ_MODEL", "llama-3.2-11b-vision-preview"),
+        model=os.environ.get("GROQ_MODEL", "llama-3.2-90b-vision-preview"),
         max_completion_tokens=250,
         messages=[
             {
