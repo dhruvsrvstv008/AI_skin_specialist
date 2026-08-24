@@ -65,7 +65,7 @@ FORMATTING REQUIREMENTS:
 - Do NOT output Markdown bold formatting.
 - Do NOT output internal reasoning, "Thinking Process", "Word count check", or any scratchpad.
 - Your output must begin exactly with "1. Disclaimer" and contain ONLY the 5 required sections.
-- Keep the entire response under 120 words. It will be converted to a short voice audio.
+- Keep the entire response under 150 words. It will be converted to a short voice audio.
 - Respond in the same language as the patient's question.
 """
 
