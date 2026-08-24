@@ -56,9 +56,9 @@ Return ONLY the final consultation text. Do not restate instructions. Do NOT use
 REQUIRED RESPONSE STRUCTURE:
 1. Disclaimer: State that AI is not a doctor and cannot diagnose.
 2. Observation: Describe in detail what you see and what it may be.
-3. Treatment: Suggest specific ingredients or treatments and explain why they help.
+3. Treatment Plan (Solutions): Suggest specific ingredients or treatments and explain why they help.
 4. Routine: Detail a step-by-step basic skincare routine.
-5. Warning: Explain what to avoid and when to see a dermatologist.
+5. Important Things to Avoid: Explain what to avoid (e.g., picking pimples, harsh scrubs) and when to see a dermatologist.
 
 FORMATTING REQUIREMENTS:
 - Do NOT use double asterisks (**) anywhere.
