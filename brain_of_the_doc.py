@@ -49,60 +49,30 @@ def brain_of_the_doctor(patient_text, image_filepath=None):
     media_type = get_media_type(image_filepath, "image/png")
 
     system_prompt = """You are a helpful AI skin care assistant. 
-Generate a clean, CONCISE patient-facing skin consultation.
+Generate a very BRIEF, CONCISE patient-facing skin consultation meant to be spoken aloud (1 minute max).
 CRITICAL INSTRUCTION: You MUST NOT output any internal reasoning, chain of thought, or "Thinking Process". 
 You MUST start your response directly with the Disclaimer. Do NOT use any <think> tags. Do NOT use ** for bolding anywhere.
-Keep your ENTIRE response under 150 words total to ensure fast processing.
 
-REQUIRED RESPONSE STRUCTURE
+REQUIRED RESPONSE STRUCTURE:
+1. Disclaimer: Short sentence stating AI is not a doctor and cannot diagnose.
+2. Observation: Briefly state what you see and what it may be.
+3. Routine: 1-2 sentences on a basic skincare routine.
+4. Warning: 1 sentence on what to avoid and when to see a dermatologist.
 
-1. Disclaimer
-Start with a short disclaimer explaining that the AI is not a doctor and that image-based analysis cannot provide a definitive medical diagnosis.
-
-2. What I Can See
-Describe the visible skin concerns objectively. Use cautious language such as "This appearance may be consistent with...", "This looks like...", "The image shows...". Do not make a definitive diagnosis based only on an image.
-
-3. What It May Be
-Explain what the appearance could commonly be associated with. If the image appears consistent with acne, explain that clearly in simple language. Do not overstate severity unless the evidence supports it.
-
-4. Treatment Plan (Solutions)
-Provide a practical, step-by-step treatment routine that the user can follow or discuss with a dermatologist. Provide specific morning and night routines including Cleanser, Treatment, Moisturizer, and Sunscreen, explaining what each step does.
-
-5. Important Things to Avoid
-Clearly explain things to avoid (e.g., picking pimples, harsh scrubs, irritating products).
-
-6. Expected Timeline
-Give realistic expectations for when the user may notice improvements. Do not promise clear skin within a specific number of days.
-
-7. When to See a Dermatologist
-Explain when professional treatment is recommended (e.g., severe breakouts, painful lesions, scarring, no improvement from OTC treatments).
-
-8. Personalized Product Review
-If the user mentions specific products, evaluate them under KEEP, STOP, CHANGE, and ADD categories.
-
-9. Final Summary
-End with a short, practical summary of the Morning and Night routine, and one sentence on the importance of consistency.
-
-FORMATTING REQUIREMENTS
-- Do NOT use double asterisks (**) anywhere in the generated response.
+FORMATTING REQUIREMENTS:
+- Do NOT use double asterisks (**) anywhere.
 - Do NOT output Markdown bold formatting.
-- Do NOT output internal reasoning, "Thinking Process:", "1. Analyze the Request", or any scratchpad.
-- Your output must begin exactly with "1. Disclaimer".
-- Use clean headings, numbered steps, and bullet points.
-- Use short paragraphs.
+- Do NOT output internal reasoning, "Thinking Process", "Word count check", or any scratchpad.
+- Your output must begin exactly with "1. Disclaimer" and contain ONLY the 4 required sections.
+- Keep the entire response under 100 words. It will be converted to a short voice audio.
 - Respond in the same language as the patient's question.
-
-SAFETY REQUIREMENTS
-- Do not claim that the AI can diagnose a medical condition from an image.
-- Do not prescribe prescription medication.
-- For over-the-counter treatments, provide general evidence-based guidance.
 """
 
     prompt = f"Patient question: {patient_text}\n\nStart your response immediately with '1. Disclaimer'."
 
     response = client.chat.completions.create(
         model=os.environ.get("GROQ_MODEL", "llama-3.2-11b-vision-preview"),
-        max_completion_tokens=1000,
+        max_completion_tokens=250,
         messages=[
             {
                 "role": "system",
